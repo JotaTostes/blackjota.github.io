@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Snake</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src="../jquery-3.2.1.js"></script>
+    <link href="styleSnake.css" rel="stylesheet">
+
+    <script>
+        //$(document).ready(function () {
+        $(function () {
+            var tamtab = 15,
+                cobra = [],
+                tempo = 300,
+                direcao = "D", newDirecao = "D",
+                tdComida,
+                limvel = 50,
+                interval,
+                pontuacao = 0;
+
+            // Cria tabela do jogo 
+            $('<table/>', { id: 'tabela' }).appendTo("body");
+            for (var i = 0; i < tamtab; i++) {
+                var tr = $('<tr/>');
+                tr.appendTo('#tabela');
+                for (var j = 0; j < tamtab; j++)
+                    $('<td/>').appendTo(tr);
+            }
+
+            // Procura as tres primeiras posiçoes da tabela e preenche com as classes rabo cabeça e corpo
+            var procuratr = $("#tabela").find("tr:eq(0)");
+            cobra[0] = procuratr.find("td:eq(3)");
+            cobra[1] = procuratr.find("td:eq(2)");
+            cobra[2] = procuratr.find("td:eq(1)");
+
+            //IIF - Immediate Invoked Funciton
+            var preencherCobra = (function preenche() {
+                $(".corpo, .cabeca, .rabo").removeClass("corpo cabeca rabo");
+                for (var i = 1; i < cobra.length - 1; i++)
+                    cobra[i].addClass("corpo");
+
+                cobra[0].addClass("cabeca");
+                cobra[cobra.length - 1].addClass("rabo");
+                return preenche;
+            })();
+            geraComida();
+            intervalo(tempo);
+
+            //Fazer a snake andar
+            function andarCobra() {
+                direcao = newDirecao;
+                var tdIndex, trIndex;
+                for (var i = cobra.length - 1; i > 0; i--) {
+                    tdIndex = cobra[i - 1].index();
+                    trIndex = cobra[i - 1].parent().index();
+                    cobra[i] = $("#tabela").find("tr:eq(" + trIndex + ")").find("td:eq(" + tdIndex + ")");
+                }
+                //Move a cabeça pra direção
+                tdIndex = cobra[0].index();
+                trIndex = cobra[0].parent().index();
+
+                switch (direcao) {
+                    case "W": trIndex--; break;
+                    case "D": tdIndex++; break;
+                    case "S": trIndex++; break;
+                    case "A": tdIndex--; break;
+                }
+                if (trIndex == tamtab)
+                    trIndex = 0;
+                if (tdIndex == tamtab)
+                    tdIndex = 0;
+
+                cobra[0] = $("#tabela").find("tr:eq(" + trIndex + ")").find("td:eq(" + tdIndex + ")");
+                preencherCobra();
+
+                //Verifico se a snake comeu a comida, faz ela crescer e diminui o tempo do interval
+                if (tdComida.index() == tdIndex && (tdComida.parent().index() == trIndex)) {
+                    tdComida.removeClass("comida");
+                    cobra.push(tdComida);
+                    pontuacao += 5
+                    $("#labelPontuacao").text(pontuacao)
+                    geraComida();
+                    clearInterval(interval)
+                    intervalo(tempo <= 50 ? 50 : tempo -= 10)
+                }
+                colisaoCobra();
+            }
+
+            function intervalo(veloc) {
+                interval = setInterval(function () {
+                    andarCobra();
+                }, veloc);
+            }
+
+            
+            $(document).keydown(function (e) {
+                if (e.keyCode == 87 && direcao != "S")
+                    newDirecao = "W";
+                else if (e.keyCode == 68 && direcao != "A")
+                    newDirecao = "D";
+                else if (e.keyCode == 83 && direcao != "W")
+                    newDirecao = "S";
+                else if (e.keyCode == 65 && direcao != "D")
+                    newDirecao = "A";
+            });
+
+
+            function geraComida() {
+                var tdSemClass = $('td:not(".cabeca, .corpo, .rabo")');
+                tdComida = $(tdSemClass[Math.floor((Math.random() * (tdSemClass.length)))]).addClass('comida');
+            }
+
+            function colisaoCobra() {
+                //verifica se colidiu a cobra
+                if ($('.cabeca').hasClass('corpo') || $('.cabeca').hasClass('rabo')) {
+                    clearInterval(interval);
+                    setTimeout(function () {
+                        alert("Errouuuuu !!!");
+                    }, 100);
+                }
+            }
+
+            $("#novoJogo").on("click", function () {
+                location.reload();
+            })
+        })
+    </script>
+</head>
+
+<body>
+    <div id="divnovoJogo">
+        <button id="novoJogo">Novo Jogo</button>
+        <div id="divPontuacao">Pontuação:
+            <label id="labelPontuacao">0</label>
+        </div>
+    </div>
+</body>
+
+</html>
